@@ -1,4 +1,5 @@
 # MM-StoryAgent
+- MM-StoryAgent 논문 참고해서 Baseline 구축 후 Remoria에 맞게 최적화 진행 중 ...
 This repo is the official implementation of "MM-StoryAgent: Immersive Narrated Storybook Video Generation with a Multi-Agent Paradigm across Text, Image and Audio".
 
 ## Introduction
