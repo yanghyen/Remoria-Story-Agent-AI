@@ -17,6 +17,11 @@ from tqdm import trange
 # 사용자 정의 도구 인스턴스를 초기화하는 함수 불러오기
 from .base import init_tool_instance
 
+sys.path.append(str(Path(__file__).resolve().parent.parent))
+
+from mm_story_agent.modality_agents.story_agent import RefImgWriterAgent, RoleExtractorAgent
+
+
 # 멀티모달 스토리 에이전트를 정의하는 클래스
 class MMStoryAgent:
 
@@ -153,12 +158,38 @@ class MMStoryAgent:
             scene_metadatas.append(metadata)
 
         # 저장
-        with open(story_dir / "scene_summaries.json", "r", encoding="utf-8") as f:
-            scene_summaries = json.load(f)
-        with open(story_dir / "scene_metadatas.json", "r", encoding="utf-8") as f:
-            scene_metadatas = json.load(f)
+        with open(story_dir / "scene_summaries.json", "w", encoding="utf-8") as f:
+            json.dump(scene_summaries, f, ensure_ascii=False, indent=2)
+
+        with open(story_dir / "scene_metadatas.json", "w", encoding="utf-8") as f:
+            json.dump(scene_metadatas, f, ensure_ascii=False, indent=2)
 
         print("✅ Text-to-Scene pipeline completed.")
+
+        # role extrac 먼저 하겠슴
+        with open(story_dir / "scene_text.json", "r", encoding="utf-8") as f:
+            scene_text = json.load(f)
+
+        cfg = {
+            "llm": "qwen",
+            "temperature": 0.7,
+            "num_outline": 4,
+            "num_turns": 3,
+            "max_conv_turns": 3,
+        }
+        
+        agent = RoleExtractorAgent(cfg)
+        roles = agent.extract_role_from_scene(scene_text)
+
+        prompt_writer_agent = RefImgWriterAgent(cfg)
+        image_prompt = prompt_writer_agent.generate_prompt_from_roles(roles)
+        print(image_prompt)
+        import ipdb
+        ipdb.set_trace()
+
+
+
+
 
         return
         # 4. 모달리티 자산 생성

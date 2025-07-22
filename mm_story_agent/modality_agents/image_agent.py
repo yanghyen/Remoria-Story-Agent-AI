@@ -651,6 +651,8 @@ class StoryDiffusionAgent:
             }, ensure_ascii=False))
             if review == "Check passed.":
                 break
+            import ipdb
+            ipdb.set_trace()
         return roles
 
     def generate_image_prompt_from_story(

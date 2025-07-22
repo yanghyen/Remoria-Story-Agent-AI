@@ -10,8 +10,7 @@ story_writer:
     num_outline: 6
   params:
     full_context: |
-      .
-
+      "콩쥐는 어릴 적 어머니를 잃고 새어머니와 팥쥐에게 구박받으며 힘들게 살아간다. 새어머니는 집안일을 콩쥐에게만 시키고, 팥쥐는 이를 놀리며 괴롭힌다. 어느 날 마을 잔치가 열리자 새어머니는 콩쥐에게 힘든 일을 시키며 잔치에 못 가게 한다. 그러나 도깨비나 선녀 등의 도움으로 콩쥐는 일을 해내고 아름다운 옷차림으로 잔칫집에 간다. 거기서 왕자와 만나게 된 콩쥐는 황급히 돌아오다 유리 신을 흘리고, 이를 단서로 콩쥐를 찾은 왕자는 그녀와 결혼하게 된다. 팥쥐와 계모는 벌을 받고, 콩쥐는 행복하게 산다."
 #################################################
 refine_writer:
   tool: RefineWriterAgent
@@ -31,6 +30,10 @@ summary_writer:
 
 meta_writer:
   tool: MetaWriterAgent
+  cfg: {}
+
+role_extractor:
+  tool: RoleExtractorAgent
   cfg: {}
 #################################################
 speech_generation:

@@ -19,6 +19,8 @@ register_map = {
     'scene_splitter': 'SceneExtractorAgent',
     'summary_writer': 'SummaryWriterAgent',
     'meta_writer': 'MetaWriterAgent',
+    'role_extractor': 'RoleExtractorAgent',
+    "ref_img_prompt_writer": "RefImgWriterAgent"
 }    
 
 # 주어진 키에 따라 해당 에이전트 클래스를 현재 디렉토리로부터 동적으로 import

@@ -231,56 +231,94 @@ Output the expanded story content for the current chapter. The result should be 
 
 # [등장인물 관련] 스토리에서 주요 등장인물 이름과 간단한 외형 설명 추출
 role_extract_system = """
-Extract all main role names from the given story content and generate corresponding role descriptions. If there are results from the previous round and improvement suggestions, improve the previous character descriptions based on the suggestions.
+You are an expert character visual profiler for image generation.
 
-## Steps
-1. First, identify the main role's name in the story.
-2. Then, identify other frequently occurring roles.
-3. Generate descriptions for these roles. Ensure descriptions are **brief** and focus on **visual** indicating gender or species, such as "little boy" or "bird".
-4. Ensure that descriptions do not exceed 20 words.
+Extract only the **visually distinctive characters who appear repeatedly** in the story. Your goal is to generate **concise but richly detailed visual descriptions** suitable for image generation prompts.
 
+## Instructions
+
+1. Identify main characters and supporting roles who appear multiple times in the story.
+2. Ignore characters with brief or non-recurring appearances.
+3. For each selected role, generate a **detailed and vivid description** (max 40 words) including the following visual traits:
+   - Gender / species
+   - Age group (e.g. young girl, elderly man)
+   - Distinctive clothing, accessories, and colors
+   - Body shape, posture, facial expressions
+   - Any unique or fantastical traits (e.g. wings, glowing eyes, mechanical arms)
+   - Texture or patterns on clothing or skin
+4. Ensure the descriptions are **highly visual**, rich in imagery, and optimized for **text-to-image generation** to produce photorealistic or stylized images.
 
 ## Input Format
-The input consists of the story content and possibly the previous output results with corresponding improvement suggestions, formatted as:
+
+The input consists of:
 {
     "story_content": "xxx",
     "previous_result": {
         "(role 1's name)": "xxx",
         "(role 2's name)": "xxx"
-    }, // Empty indicates the first round
-    "improvement_suggestions": "xxx" // Empty indicates the first round
+    }, // Empty if first round
+    "improvement_suggestions": "xxx" // Empty if first round
 }
 
 ## Output Format
-Output the character names and descriptions following this format:
+
+Output a JSON dictionary with character names as keys and richly detailed visual descriptions as values:
 {
     "(role 1's name)": "xxx",
     "(role 2's name)": "xxx"
 }
-Strictly follow the above steps and directly output the results without any additional content.
+
+Only output the dictionary. Do not include any explanation or extra text.
+""".strip()
+
+reference_image_write_system = """
+You are an expert prompt engineer specialized in transforming detailed character descriptions into a clear, concise, and well-structured single-scene image generation prompt suitable for cartoon-style illustrations.
+
+Given:
+- A list of characters with their detailed attributes (age, appearance, clothing, posture, expression, props, behavior, etc.)
+- Individual settings or partial background/context related to each character
+
+Your task:
+- First, write a detailed description of the background and environment, clearly specifying:
+  * How the characters will be spatially arranged within the scene (e.g., standing side by side, sitting around a table, foreground vs background).
+  * The style of the image to be generated (e.g., vibrant cartoon-style, whimsical, realistic, etc.).
+  * The overall setting including time of day, lighting, and atmosphere.
+- Then, create one unified image generation prompt describing a single cohesive scene that:
+  1. Specifies the total number of characters to appear.
+  2. Defines their approximate spatial arrangement and posture (building on the background layout).
+  3. Describes the camera angle and shot type (e.g., medium shot, frontal angle).
+  4. Summarizes the shared background/environment setting.
+  5. Indicates the overall mood, lighting, and color tone.
+  6. Includes essential character traits or props that make each character recognizable without excessive detail.
+  7. Avoids excessive complexity by focusing on how to fit all characters harmoniously in one scene.
+
+Output format:
+- First, provide a paragraph describing the background, environment, style, and spatial arrangement of characters.
+- Then, provide a single paragraph prompt ready to be fed into an image generation model that includes the characters and scene details.
+
+
+
 """.strip()
 
 # [등장인물 관련] 등장인물 설명이 기준에 맞는지 검토 및 피드백 제공
 role_review_system = """
-Review the role descriptions corresponding to the given story. If requirements are met, output "Check passed.". If not, provide improvement suggestions.
+You are an expert visual scene describer specialized in creating vivid, detailed prompts for cartoon-style illustrations. 
 
-## Requirements for Role Descriptions
-1. Descriptions must be **brief**, **visual** descriptions that indicate gender or species, such as "little boy" or "bird".
-2. Descriptions should not include any information beyond appearance, such as personality or behavior.
-3. The description of each role must not exceed 20 words.
+Given a list of characters with their names, ages, appearances, clothing, poses, props, and relative positions, generate a complete scene description prompt that includes:
 
-## Input Format
-The input consists of the story content and role extraction results, with a format of:
-{
-    "story_content": "xxx",
-    "role_descriptions": {
-        "(Character 1's Name)": "xxx",
-        "(Character 2's Name)": "xxx"
-    }
-}
+1. An overview sentence describing the overall composition, camera angle, style, number and types of characters, and the general setting.
+2. Detailed descriptions for each character, including age, appearance, clothing, pose, props, and relative position.
+3. Descriptions for any animals or non-human characters with equal detail.
+4. A creative and fitting background description including environment, time of day, lighting, atmosphere, and any relevant natural or architectural elements, based on the characters and their story context.
+5. Clear and concise language suitable for artists or AI image generation.
+6. Well-structured formatting, separating overview, characters, and background sections.
 
-## Output Format
-Directly output improvement suggestions without any additional content if requirements are not met. Otherwise, output "Check passed."
+Here are the character details:
+
+{insert character list with attributes}
+
+Generate the full scene prompt now, including a creative background description.
+
 """.strip()
 
 # [이미지 생성 관련] 스토리 내용을 기반으로 시각적 장면 설명 생성

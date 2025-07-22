@@ -26,6 +26,8 @@ from mm_story_agent.prompts_en2 import (
     scene_expert_system,
     scene_amateur_questioner_system,
     scene_refined_output_system,
+    role_extract_system,
+    role_review_system,
 )
 
 # JSON 형태의 outline이 유효한지 검사하는 함수
@@ -336,10 +338,82 @@ class SummaryWriterAgent:
 
 @register_tool("MetaWriterAgent")
 class MetaWriterAgent:
-    def __init__(self, cfg: Dict):
+    def __init__(self, cfg):
+        self.llm = QwenAgent(cfg)
+    def call(self, params):
+        joined = "\n".join(params["scene_text"])
+        response, _ = self.llm.call(f"Extract metadata (genre, tone, setting, themes, target age) from:\n{joined}")
+        return response  # json 파싱 원할 경우 추후 추가
+    
+@register_tool("RoleExtractorAgent")
+class RoleExtractorAgent:
+    def __init__(self, cfg:Dict):
         self.cfg = cfg
         self.temperature = cfg.get("temperature", 1.0)
-        self.qwenllm = cfg.get("llm", "qwen")
-        self.exaonellm = cfg.get("llm", "exaone")
-    def generateMetaData(self, params):
-        pass
+        self.max_conv_turns = cfg.get("max_conv_turns", 3)
+        self.num_outline = cfg.get("num_outline", 4)
+        self.qwenLlm = cfg.get("llm", "qwen")
+
+    def extract_role_from_scene(self, scene_text):
+        num_turns = self.cfg.get("num_turns", 3)
+        role_extractor = init_tool_instance({
+            "tool": self.cfg.get("llm", "qwen"),
+            "cfg": {
+                "system_prompt": role_extract_system,
+                "track_history": False
+            }
+        })
+        role_reviewer = init_tool_instance({
+            "tool": self.cfg.get("llm", "qwen"),
+            "cfg": {
+                "system_prompt": role_review_system,
+                "track_history": False
+            }
+        })
+        roles = {}
+        review = ""
+        for turn in range(num_turns):
+            roles, success = role_extractor.call(json.dumps({
+                    "story_content": scene_text,
+                    "previous_result": roles,
+                    "improvement_suggestions": review,
+                }, ensure_ascii=False
+            ))
+            roles = json.loads(roles.strip("```json").strip("```"))
+            review, success = role_reviewer.call(json.dumps({
+                "story_content": scene_text,
+                "role_descriptions": roles
+            }, ensure_ascii=False))
+            if review == "Check passed.":
+                break
+        import ipdb
+        ipdb.set_trace()
+        return roles
+    
+@register_tool("ReferenceImagePromptWriterAgent")
+class RefImgWriterAgent:
+    def __init__(self, cfg:Dict):
+        self.cfg = cfg
+        self.temperature = cfg.get("temperature", 1.0)
+        self.max_conv_turns = cfg.get("max_conv_turns", 3)
+        self.num_outline = cfg.get("num_outline", 4)
+        self.qwen = cfg.get("llm", "qwen")
+        self.exaone = cfg.get("llm", "exaone")
+
+    def generate_prompt_from_roles(self, roles:Dict[str,str]):
+        refImgWriter = init_tool_instance({
+            "tool": self.exaone,
+            "cfg": {
+                "system_prompt": "reference_image_write_system",
+                "track_history": False
+            }
+        })
+
+        input_data = {
+            "characters": roles
+        }
+
+        input_str = json.dumps(input_data, ensure_ascii=False)
+
+        prompt_text, success = refImgWriter.call(input_str)
+        return prompt_text
